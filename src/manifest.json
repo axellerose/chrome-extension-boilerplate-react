@@ -11,14 +11,12 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "icons": {
-    "128": "icon-128.png"
-  },
+
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*", "<all_urls>"],
       "js": ["contentScript.bundle.js"],
-      "css": ["content.styles.css"]
+      "all_frames": true
     }
   ],
   "devtools_page": "devtools.html",
@@ -27,5 +25,15 @@
       "resources": ["content.styles.css", "icon-128.png", "icon-34.png"],
       "matches": []
     }
-  ]
+  ],
+  "permissions": [
+    "storage",
+    "https://mcqh779j36zt3vg-882q0dpmyqg8.pub.sfmc-content.com/wz4zt4pzs3g",
+    "https://*.exacttarget.com",
+    "https://cloud.coms.opap.gr/filterDifinition",
+    "https://mc.s50.exacttarget.com/"
+  ],
+  "content_security_policy": {
+    "extension_pages": "upgrade-insecure-requests; default-src 'self';connect-src * data: blob: filesystem:;style-src 'self' data: 'unsafe-inline';img-src 'self' data:;frame-src 'self' data:;font-src 'self' data:;media-src * data: blob: filesystem:;"
+  }
 }
