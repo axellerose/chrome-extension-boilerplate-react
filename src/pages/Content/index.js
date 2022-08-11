@@ -1,20 +1,19 @@
 import CryptoJS from 'crypto-js';
-console.log(
-  '%cindex.js line:2 "content check"',
-  'color: #007acc;',
-  'content check'
-);
+const Buffer = require('buffer/').Buffer;
+var jwt = require('jsonwebtoken');
 
 function encrypt(data, key) {
   var encrypted = CryptoJS.AES.encrypt(data, key);
-  console.log('encrypted', encrypted);
-  return encrypted;
-}
+  var saltHex = encrypted.salt.toString(); // random salt
+  var ctHex = encrypted.ciphertext.toString(); // actual ciphertext
+  var ivHex = encrypted.iv.toString(); // generated IV
 
-function decrypt(data, key) {
-  var decrypted = CryptoJS.AES.decrypt(data, key).toString(CryptoJS.enc.Utf8);
-  console.log('decrypted : ', decrypted);
-  return decrypted;
+  const result = {
+    saltHex,
+    ctHex,
+    ivHex,
+  };
+  return result;
 }
 
 let deNameFromStorage = '';
@@ -29,10 +28,6 @@ async function getFromStorage(key) {
     else return result[key];
   });
 }
-
-/*   
-      On chrome extension storage change event listener
-*/
 
 let buList = {
   'TESTING ENVIRONMENT': {
@@ -76,34 +71,29 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
   }
 });
 
-/*   
-      End of On chrome extension storage change event listener
-*/
-
 const retrieveRowCount = (filter, deName, requestLogDE, unitUrl) => {
-  console.log(
-    '%cindex.js line:84 { deName, filter, requestLogDE, unitUrl }',
-    'color: #007acc;',
-    { deName, filter, requestLogDE, unitUrl }
-  );
   const data = encrypt(
     JSON.stringify({ deName, filter, requestLogDE, unitUrl }),
     '0ZVV@oL3S99!'
   );
 
-  console.log(data);
+  const payload = { deName, filter, requestLogDE, unitUrl };
+  const secret = '0ZVV@oL3S99!';
+  const jwtEncrypted = jwt.sign(payload, secret);
+
   fetch(unitUrl, {
     method: 'POST',
     mode: 'cors',
-    body: data,
+    body: jwtEncrypted,
   })
     .then((response) => response.json())
     .then((data) => {
+      console.log('%cindex.js line:85 data', 'color: #007acc;', data);
       const rows = data.postRequestResultObject.rowCount;
-      //  console.log('RowsCount: ', rows)
+
       document.querySelector('#filterButton').innerHTML = rows;
     })
-    .catch((error) => console.error(JSON.stringify(error)));
+    .catch((error) => console.error(error));
 };
 
 const sendFilter = async () => {
