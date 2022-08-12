@@ -53,11 +53,6 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
   }
 });
 
-var keySize = 256;
-var ivSize = 128;
-var iterations = 100;
-var message = 'Hello World';
-var password = 'Secret Password';
 const crypt = (salt, text) => {
   const textToChars = (text) => text.split('').map((c) => c.charCodeAt(0));
   const byteHex = (n) => ('0' + Number(n).toString(16)).substr(-2);
@@ -70,7 +65,6 @@ const crypt = (salt, text) => {
     .map(byteHex)
     .join('');
 };
-console.log(crypt(password, message));
 
 const retrieveRowCount = async (filter, deName, requestLogDE, unitUrl) => {
   const data = { filter, deName, requestLogDE, unitUrl };
@@ -312,11 +306,6 @@ const sendFilter = async () => {
 };
 
 const collectData = () => {
-  console.log(
-    '%cindex.js line:330 "colect data"',
-    'color: #007acc;',
-    'colect data'
-  );
   try {
     if (!document.querySelectorAll('.ft-filter-preview-source')[0]) {
       chrome.storage.sync.get('DEname', function (res) {
@@ -335,18 +324,8 @@ const collectData = () => {
         }
       );
     }
-    // if (!document.querySelectorAll('.carb-pop-input')[2]) {
-    //   chrome.storage.sync.get('fitlerKey', function (res) {
-    //     filterKeyFromStorage = res.fitlerKey
-    //   })
-    // } else {
-    //   filterKey = document.querySelectorAll('.carb-pop-input')[2].value
-    //   chrome.storage.sync.set({
-    //     filterKey,
-    //   }, () => filterKeyFromStorage = filterKey)
-    // }
   } catch (e) {
-    console.log('failed collect data', e);
+    console.err('Failed to collect data', e);
   }
 };
 
@@ -364,7 +343,7 @@ filterContainer.style.cssText =
 filterContainer.id = 'filterContainer';
 filterContainer.appendChild(filterButton);
 
-chrome.storage.sync.set({ buName: null }, console.log('BU name cleaned'));
+chrome.storage.sync.set({ buName: null });
 
 setInterval(async () => {
   const headerContainer = document.querySelector('.op-head');
@@ -393,11 +372,6 @@ setInterval(async () => {
       chrome.storage.sync.set({
         buName: activeBUName.textContent,
       });
-      console.log(
-        'updated buName',
-        activeBUName.textContent,
-        BUNameFromStorage
-      );
     }
   }
 
