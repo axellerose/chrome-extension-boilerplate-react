@@ -78,8 +78,10 @@ const retrieveRowCount = async (filter, deName, requestLogDE, unitUrl) => {
     .then((response) => response.json())
     .then((data) => {
       console.log('%cindex.js line:85 data', 'color: #007acc;', data);
-      const rows = data.postRequestResultObject.rowCount;
-
+      const rows = data.rowCount;
+      if (data.error) {
+        alert(data.error.message);
+      }
       document.querySelector('#filterButton').innerHTML = rows;
     })
     .catch((error) => console.error(error));

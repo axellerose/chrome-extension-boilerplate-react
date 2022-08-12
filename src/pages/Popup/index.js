@@ -20,10 +20,6 @@ let buList = {
   },
 };
 
-/* 
-    Create elements
-*/
-
 const addElemets = (x, y, z) => {
   x.appendChild(y);
   x.appendChild(z);
@@ -42,22 +38,6 @@ for (let key in buList) {
   input.disabled = true;
   input.classList.add('.radio');
 
-  input.onclick = function () {
-    console.log('on click', this);
-    this.checked = true;
-    alert(this.value);
-    chrome.storage.sync.set(
-      {
-        inputId: this.id,
-        buLink: this.value,
-        buName: this.title,
-      },
-      () => {
-        activeBU = this.title;
-        activeRadioId = this.id;
-      }
-    );
-  };
   let label = document.createElement('label');
   label.for = bu.id;
   label.innerText = key;
@@ -65,8 +45,6 @@ for (let key in buList) {
   document
     .querySelector('#popupForm')
     .appendChild(addElemets(container, input, label));
-
-  console.log('ui painted');
 }
 
 async function getFromStorage(key) {
@@ -79,12 +57,10 @@ async function getFromStorage(key) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-  console.log('loaded');
   let buName = await getFromStorage('buName');
   let target = document.querySelector(`#${buList[buName].id}`);
   if (target) {
     target.checked = true;
-    console.log('target checked');
   } else {
     console.log('target not found');
   }
