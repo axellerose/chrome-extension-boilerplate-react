@@ -1,0 +1,161 @@
+<script runat="server" language="javascript">
+    Platform.Load("core", "1.1.1")
+    HTTPHeader.SetValue("Access-Control-Allow-Methods", "POST")
+    HTTPHeader.SetValue("Access-Control-Allow-Origin", "*")
+    var VERSION = 'v:11-08-2022 15:26'
+    var timestamps = new Date().toLocaleString()
+    var unitUrl, requestLogDE
+    Array.prototype.reduce2 = function (f, result) {
+        var i = 0;
+        if (arguments.length < 2) {
+            i = 1;
+            result = this[0];
+        }
+        for (; i < this.length; i++) {
+            result = f(result, this[i], i, this);
+        }
+        return result;
+    };
+    function decrypt(salt, encoded) {
+
+        function textToChars(text) {
+            var r = [];
+            for (var i = 0; i < text.length; i++) {
+                r[i] = text[i].charCodeAt(0);
+            }
+            return r;
+        }
+        function applySaltToChar(code) {
+            return textToChars(salt).reduce2(function (a, b) {
+                return a ^ b
+            }
+                , code)
+        }
+
+        var c = encoded.match(/.{1,2}/g);
+        for (var i = 0; i < c.length; i++) {
+            c[i] = parseInt(c[i], 16);
+        }
+        for (var i = 0; i < c.length; i++) {
+            c[i] = applySaltToChar(c[i]);
+        }
+        for (var i = 0; i < c.length; i++) {
+            c[i] = String.fromCharCode(c[i]);
+        }
+        return c.join("")
+    }
+    var resObj = {
+        version: VERSION
+    }
+    var isAllowed = false;
+    var allowedIPs = ['194.209.82.167', '212.54.203.251', '135.181.199.42', '65.108.91.215'];
+    var requesterIP = Platform.Request.ClientIP();
+    for (var i = 0; i < allowedIPs.length; i++) {
+        if (allowedIPs[i] == requesterIP) isAllowed = true;
+    }
+    if (isAllowed) {
+        if (Platform.Request.Method == "POST") {
+            try {
+                var encrypted = Platform.Request.GetPostData()
+                var decrypted = decrypt('0ZVV@oL3S99!', encrypted)
+                var json = Platform.Function.ParseJSON(decrypted)
+                var deName = json.deName
+                var filter = json.filter
+                unitUrl = json.unitUrl
+                requestLogDE = json.requestLogDE
+                /* Grabs DE Object Info */
+                var prox1 = new Script.Util.WSProxy()
+                var cols1 = ["Name", "CustomerKey"]
+                var filter1 = {
+                    Property: "Name",
+                    SimpleOperator: "equals",
+                    Value: deName
+                }
+                var desc = prox1.retrieve("DataExtension", cols1, filter1)
+                var CustKeyStr = desc.Results[0].CustomerKey
+
+                var filterName = deName + (Math.floor(Math.random() * 1000) + 1).toString()
+                var newFD = {
+                    Name: filterName,
+                    CustomerKey: filterName,
+                    Filter: filter,
+                    DataSource: {
+                        Type: 'DataExtension',
+                        CustomerKey: CustKeyStr
+                    }
+                }
+                try {
+                    FilterDefinition.Add(newFD)
+                }
+                catch (e) {
+                    resObj.error = {
+                        message: 'Error while creating filter.',
+                        error: e
+                    }
+                }
+                var newFDName = newFD.Name
+                try {
+                    var paramFilter
+                    Variable.SetValue("@paramFilter", newFDName);
+</script>
+%%[
+var @rows, @rowCount, @result
+set @rows = ExecuteFilter(@paramFilter)
+set @rowCount = rowcount(@rows)
+]%%
+<script runat="server" language="javascript">
+                    var ampscript = Variable.GetValue("@rowCount")
+                    resObj.rowCount = Platform.Function.ParseJSON(ampscript)
+                }
+                catch (error) {
+                    resObj.error = {
+                        message: 'Error while filtering Data Extension.',
+                        error: e
+                    }
+                }
+                try {
+                    var fd = FilterDefinition.Init(newFD.Name)
+                    fd.Remove()
+                }
+                catch (error) {
+                    resObj.error = {
+                        message: 'Error deleting filtered Data Extension.',
+                        error: e
+                    }
+                }
+                try {
+                    var requestLogDE = DataExtension.Init(requestLogDE);
+                    requestLogDE.Rows.Add({
+                        requestURL: unitUrl, timestamps: timestamps, requesterIP: requesterIP, response: Stringify(resObj)
+                    }
+                    );
+                }
+                catch (e) {
+                    resObj.error = {
+                        message: 'Error while adding logs.',
+                        error: e
+                    }
+                }
+            }
+            catch (e) {
+                resObj.error = {
+                    message: 'Decryption failed. Wrong payload data.',
+                    error: e
+                }
+            }
+        }
+        else {
+            resObj.error = {
+                message: 'Error while adding logs.',
+                error: e
+            }
+        }
+    }
+    else {
+        resObj.error = {
+            message: 'Access failed. Wrong IP address.',
+            error: e
+        }
+    }
+    Write(Platform.Function.Stringify(resObj));
+</script>
