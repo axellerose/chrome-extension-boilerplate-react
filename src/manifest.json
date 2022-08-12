@@ -1,7 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Extension with React & Webpack",
-  "description": "A chrome extension boilerplate built with React 17, Webpack 5, and Webpack Dev Server 4",
+  "name": "Filter Preview Extension",
+  "description": "A chrome extension that filters data extension and shows row count.",
+  "versiom": "1.1.3",
   "background": { "service_worker": "background.bundle.js" },
   "action": {
     "default_popup": "popup.html",
