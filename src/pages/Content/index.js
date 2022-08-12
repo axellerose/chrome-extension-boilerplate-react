@@ -1,21 +1,3 @@
-import CryptoJS from 'crypto-js';
-const Buffer = require('buffer/').Buffer;
-var jwt = require('jsonwebtoken');
-
-function encrypt(data, key) {
-  var encrypted = CryptoJS.AES.encrypt(data, key);
-  var saltHex = encrypted.salt.toString(); // random salt
-  var ctHex = encrypted.ciphertext.toString(); // actual ciphertext
-  var ivHex = encrypted.iv.toString(); // generated IV
-
-  const result = {
-    saltHex,
-    ctHex,
-    ivHex,
-  };
-  return result;
-}
-
 let deNameFromStorage = '';
 let requestLogDEFromStorage = '';
 let urlFromStorage = '';
@@ -71,20 +53,33 @@ chrome.storage.onChanged.addListener(function (changes, namespace) {
   }
 });
 
-const retrieveRowCount = (filter, deName, requestLogDE, unitUrl) => {
-  const data = encrypt(
-    JSON.stringify({ deName, filter, requestLogDE, unitUrl }),
-    '0ZVV@oL3S99!'
-  );
+var keySize = 256;
+var ivSize = 128;
+var iterations = 100;
+var message = 'Hello World';
+var password = 'Secret Password';
+const crypt = (salt, text) => {
+  const textToChars = (text) => text.split('').map((c) => c.charCodeAt(0));
+  const byteHex = (n) => ('0' + Number(n).toString(16)).substr(-2);
+  const applySaltToChar = (code) =>
+    textToChars(salt).reduce((a, b) => a ^ b, code);
+  return text
+    .split('')
+    .map(textToChars)
+    .map(applySaltToChar)
+    .map(byteHex)
+    .join('');
+};
+console.log(crypt(password, message));
 
-  const payload = { deName, filter, requestLogDE, unitUrl };
-  const secret = '0ZVV@oL3S99!';
-  const jwtEncrypted = jwt.sign(payload, secret);
+const retrieveRowCount = async (filter, deName, requestLogDE, unitUrl) => {
+  const data = { filter, deName, requestLogDE, unitUrl };
+  const payload = crypt('0ZVV@oL3S99!', JSON.stringify(data));
 
   fetch(unitUrl, {
     method: 'POST',
     mode: 'cors',
-    body: jwtEncrypted,
+    body: payload,
   })
     .then((response) => response.json())
     .then((data) => {
