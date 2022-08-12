@@ -2,7 +2,7 @@
     Platform.Load("core", "1.1.1")
     HTTPHeader.SetValue("Access-Control-Allow-Methods", "POST")
     HTTPHeader.SetValue("Access-Control-Allow-Origin", "*")
-    var VERSION = 'v:11-08-2022 15:26'
+    var VERSION = 'v:11-08-2022 16:30'
     var timestamps = new Date().toLocaleString()
     var unitUrl, requestLogDE
     Array.prototype.reduce2 = function (f, result) {
@@ -107,7 +107,7 @@ set @rowCount = rowcount(@rows)
                     var ampscript = Variable.GetValue("@rowCount")
                     resObj.rowCount = Platform.Function.ParseJSON(ampscript)
                 }
-                catch (error) {
+                catch (e) {
                     resObj.error = {
                         message: 'Error while filtering Data Extension.',
                         error: e
@@ -117,7 +117,7 @@ set @rowCount = rowcount(@rows)
                     var fd = FilterDefinition.Init(newFD.Name)
                     fd.Remove()
                 }
-                catch (error) {
+                catch (e) {
                     resObj.error = {
                         message: 'Error deleting filtered Data Extension.',
                         error: e

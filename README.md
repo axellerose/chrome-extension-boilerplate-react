@@ -1,71 +1,64 @@
-# Get started
+# Filter Result Preview Google Chrome Extension
 
-## 1. Upload files to SFMC Cloud Pages
+A custom Chrome Extension that allows to fitler Data Extension and see the result without running a filter inside SFMC.
 
-1. Go to your SFMC environment and proceed to **Web Studio** > **Cloud Pages**
-2. Create a new Collection, for example "DE Fitler Preview"
-3. Inside Collection go to "Add Content" (top-right corner) and select **Code Resource**
-4. Enter Name, for example "Filter Definition"
-5. Press Next and select **JSON** file
-6. On your computer: Go to folder `ssjs` and open `main.html` file
-7. Copy all content `ctrl + a` then `ctrl + c`
-8. Paste copied code to JSON file you have just created in SFMC Cloud Pages `ctrl + v`
-9. Now you have the code in your SFMC environment. Press **Save** and **Publish**
-10. Each filte in Cloud Pages has a unique url. You can find it on top-left corner of an opened file. Copy the path of the "Filter Definition" file, you will need it in the next steps.
-
-## 2. Edit main.html file 
-
-1. On your computer: open `chrome_extension` folder and open `contentScripts.js` file in any text editor
-2. On line 4 replace the value of the variable `FILTER_DEFINITON_URL` with a new url that you have copied during step **1.10**
-3. Your new line 4 and variable should look like `const FILTER_DEFINITON_URL = "https://m.opap.gr/filterDefinition"`
-4. Save changes
-## 3. Install Google Chrome Etension
+## Installation
 
 1. In Google Chrome browser go to **Settings** > **Extensions** and activate **Developer mode** (top-right corner)
 2. On the top-left corner press **Upload unpacked**
-3. Select `chrome_extension` folder and press upload.
+3. Select `build` folder and press upload
 4. Google Chrome Extension (GCE) is now active in your browser
 
-**NOTE:**
+## CloudPage ampscript processing
 
-- Each time you want to switch between Business units, remember that every BU must have 'Filter Definition' JSON file in Cloud Pages. The variable `FILTER_DEFINITION_URL` located on **line 4** of `contentScripts.js` file must correspond to 'Filter Definiton' JSON file url. Just copy a new path, replace the old one and upload GCE again.
+A cloud page is created by web studio and hosts on MC side as JSON resource file. It processes incoming AMPscript and returns result string to the Chrome Extension. The script can process only one filter. You can find an ampscript processing CloudPage in the Web Studio -> CloudPages -> _Filter Preview > FitlerPreviewServer. This template is hosts in **TESTING ENVIRONMENT**
 
+## Logs
 
-# Notes for OPAP Security Team
+The Chrome Extension saves request logs info: Timestamps, Requester IP, Requester URL, Response. Every Business Unit has log Data Extension. You can find log Data Extension in the Data Extensions -> System -> FilterPreviewRequestLogDE
 
-## Files overview
+## Application structure
 
-### chrome_extension folder
+```bash
+.
+├── README.md - "docs file"
+├── .babelrc - "javascript compiler"
+├── .eslintrc - "code spell review tool"
+├── .pretierrc - "code formatter tool"
+├── webpack.config.js - "Webpack 5 configuration"
+├── package-lock.json - "packages versions"
+├── package.json - "application descriptions and dependencies"
+├── src
+│   ├── assets
+│   │   └── img
+│   │   │   └── icon.png - "filter icon"
+│   ├── pages
+│   │   └── Background
+│   │   │   └── index.js - "Chrome Extension background scripts"
+│   │   └── Content
+│   │   │   └── index.js - "Paint UI, collect and encrypt data, get result from Cloud Pages"
+│   │   └── Popup
+│   │   │   └── index.js - "Paint popup UI, show current Business Unit"
+│   │   │   └── index.html - "HTML layout"
+│   ├── manifest.json - "Chrome Extension settings"
+│   ├── ssjs
+│   │   └── filterPreviewServer.html - "SSJS - functionality for Cloud Page JSON source file"
+│   ├── utils
+│   │   └── build.js - "compiler config"
+│   │   └── env.js - "environment setting"
+│   │   └── webserver.js - "webserver config"
+```
 
-- `background.js` : script that runs Google Chrome Extension (GCE) on background
+## Security Features
 
-- `contentScripts.js` : runs the logic of GCE <br>
+- IP Whitelisting: access is limited by a list of IP addresses provided by OPAP;
+- Data Encryption: data collected from page HTML is encrypted by Chrome Extension and Decrypted on Cloud Page;
 
-    `const retrieveRowCount = (filter, deName, filterKey) => {}` <br>
-    Does a POST request to cloud pages, returns rows count and changes the text of a button <br>
+## Chrome Extension workflow
 
-    `const sendFilter = () => {}` <br>
-    Inner function `findFilter()` iterates through the Filter Form and converts collected data to a filter object `resultFilter`. Finally it runs a function `const retrieveRowCount = (filter, deName, filterKey)` <br>
+From HTML page Chrome Extension collects Business Unit name, Data Extension name, filter form data. This data is sent to Cloud Page where data is decrypted. Then a new fitler activity is created, run and send a result back to Chrome Extension UI (rows count).
 
-    `const collectData = () => {}` <br>
-    Iterates through the page HTML content and saves Data Extension name and Fitler Key to chrome extension storage  <br>
+Current Chrome Extension is only available at:
 
-    `const filterButton, filterContainer` <br>
-    Filter button definition<br>
-
-    `setInterval()` <br>
-    Checks that we are on the right page and paint Fitler button<br>
-
-- `manifest.json` <br>
-Contains setup and permissions for GCE.
-- `package.json` - 
-
-
-### ssjs folder
-
-- `filterTemplate` <br>
-Contains a filter logic. Starting from `line 350` it processes the POST request and returns respObj object that contains RowCount. All content above line 350 could be used for security and debug proposes. At the moment this code does absolutely nothing.
-
-
-### GCE workflow
-
+- Email Studio -> Email -> Subscribers -> Data Filters -> Filter preview page;
+- Email Studio -> Email -> Subscribers -> Data Filters -> Filter preview page > Filter edit page.
